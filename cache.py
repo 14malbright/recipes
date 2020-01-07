@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
+import types
 
 
 def default_key(*args, **kwargs):
@@ -26,8 +27,15 @@ def Cache(base=dict, *, name=None, key_func=None):  # XXX: check function defs
             result = self[key]
         return result  # indirection for weakref
 
+    def get(self, instance, cls):
+        if instance is None:
+            return self
+        else:
+            return types.MethodType(self, instance)
+
     return type(name, (base,), {"__init__": init,
-                                "__call__": call})
+                                "__call__": call,
+                                "__get__": get})
 
 
 Cache = Cache()(Cache)  # remember created classes (e.g., dictCache)
@@ -49,7 +57,7 @@ if __name__ == "__main__":
         def __init__(self, x, y):
             self.out = x * y
 
-        @Cache()  # does not work for methods
+        @Cache()
         def div(self, a, b):
             return a / b
 
